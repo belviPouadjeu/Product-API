@@ -6,4 +6,6 @@ import com.belvinard.products_api.response.ProductResponse;
 public interface ProductService {
     ProductDTO createProduct(ProductDTO productDTO);
     ProductResponse getAllProducts();
+    ProductDTO updateProduct(Long productId, ProductDTO productDTO);
+
 }

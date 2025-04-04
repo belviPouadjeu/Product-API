@@ -7,6 +7,7 @@ import com.belvinard.products_api.response.MyErrorResponses;
 import com.belvinard.products_api.response.ProductResponse;
 import com.belvinard.products_api.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -130,6 +131,35 @@ public class ProductController {
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
+
+    @PutMapping("/{productId}")
+    @Operation(
+            summary = "Update an existing product",
+            description = "Updates the product details by ID. Requires name, price, and stock quantity."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Product updated successfully",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ProductDTO.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Product not found",
+                    content = @Content(mediaType = "application/json")
+            )
+    })
+    public ResponseEntity<ProductDTO> updateProduct(
+            @Parameter(description = "ID of the product to update", example = "1")
+            @PathVariable Long productId,
+
+            @Valid @RequestBody ProductDTO productDTO) {
+
+        ProductDTO updated = productService.updateProduct(productId, productDTO);
+        return new ResponseEntity<>(updated, HttpStatus.OK);
+    }
+
 
     @Operation(hidden = true)
     @ExceptionHandler(ResourceNotFoundException.class)

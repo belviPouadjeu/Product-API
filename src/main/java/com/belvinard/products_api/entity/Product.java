@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long productId;
 
     @NotBlank(message = "Product name cannot be blank")
     @Column(nullable = false, length = 100, unique = true)
@@ -37,19 +37,19 @@ public class Product {
     public Product() {
     }
 
-    public Product(Long id, String name, BigDecimal price, Integer stockQuantity) {
-        this.id = id;
+    public Product(Long productId, String name, BigDecimal price, Integer stockQuantity) {
+        this.productId = productId;
         this.name = name;
         this.price = price;
         this.stockQuantity = stockQuantity;
     }
 
-    public Long getId() {
-        return id;
+    public Long getProductId() {
+        return productId;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setProductId(Long productId) {
+        this.productId = productId;
     }
 
     public String getName() {
