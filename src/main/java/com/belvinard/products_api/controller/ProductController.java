@@ -1,15 +1,19 @@
 package com.belvinard.products_api.controller;
 
 import com.belvinard.products_api.dto.ProductDTO;
+import com.belvinard.products_api.exceptions.APIException;
 import com.belvinard.products_api.exceptions.ResourceNotFoundException;
 import com.belvinard.products_api.response.MyErrorResponses;
+import com.belvinard.products_api.response.ProductResponse;
 import com.belvinard.products_api.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +23,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -82,6 +87,33 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
     }
 
+    @Operation(
+            summary = "Get all products",
+            description = "Returns a list of all products in the inventory."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of products",
+                    content = @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = ProductDTO.class))
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "No products available"
+            )
+    })
+    @GetMapping
+    public ResponseEntity<ProductResponse> getAllProducts() {
+        ProductResponse productResponse = productService.getAllProducts();
+        return new  ResponseEntity<>(productResponse, HttpStatus.OK);
+
+//        return ResponseEntity.ok(products);
+    }
+
+
     // ✅ Handle validation errors
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<MyErrorResponses> handleValidationException(MethodArgumentNotValidException ex) {
@@ -105,5 +137,23 @@ public class ProductController {
         MyErrorResponses errorResponse = new MyErrorResponses("NOT_FOUND", ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
+
+    @ExceptionHandler(APIException.class)
+    public ResponseEntity<MyErrorResponses> myAPIException(APIException ex) {
+        MyErrorResponses errorResponse = new MyErrorResponses("BAD_REQUEST", ex.getMessage());
+
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, String>> handleValidationException(ConstraintViolationException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getConstraintViolations().forEach(violation ->
+                errors.put(violation.getPropertyPath().toString(), violation.getMessage())
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+
 
 }

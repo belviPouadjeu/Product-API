@@ -21,7 +21,7 @@ public class Product {
 
     @NotBlank(message = "Product name cannot be blank")
     @Column(nullable = false, length = 100, unique = true)
-    @Size(min = 3, max = 10, message = "Product's name must be 5-30 characters")
+    @Size(min = 3, max = 30, message = "Product's name must be 5-30 characters")
     private String name;
 
     @NotNull(message = "Price is required")
