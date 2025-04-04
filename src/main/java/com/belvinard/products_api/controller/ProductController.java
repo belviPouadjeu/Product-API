@@ -160,6 +160,25 @@ public class ProductController {
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
+    @Operation(
+            summary = "Delete a product",
+            description = "Deletes a product by its ID. Throws 404 if the product is not found."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Product deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Product not found")
+    })
+    @DeleteMapping("/{productId}")
+    public ResponseEntity<ProductDTO> deleteProduct(
+            @Parameter(description = "ID of the product to delete", example = "1")
+            @PathVariable Long productId) {
+
+        ProductDTO productDTO =  productService.deleteProduct(productId);
+        return new ResponseEntity<>(productDTO, HttpStatus.OK);
+    }
+
+
+
 
     @Operation(hidden = true)
     @ExceptionHandler(ResourceNotFoundException.class)
