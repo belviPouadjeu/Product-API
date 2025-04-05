@@ -1,58 +1,30 @@
-//package com.belvinard.products_api.config;
-//
-//import io.swagger.v3.oas.models.OpenAPI;
-//import io.swagger.v3.oas.models.info.Contact;
-//import io.swagger.v3.oas.models.info.Info;
-//import io.swagger.v3.oas.models.info.License;
-//import io.swagger.v3.oas.models.servers.Server;
-//import org.springframework.beans.factory.annotation.Value;
-//import org.springframework.context.annotation.Bean;
-//import org.springframework.context.annotation.Configuration;
-//
-//import java.util.List;
-//
-//@Configuration
-//public class SwaggerConfig {
-//
-//    @Value("${server.port:8082")
-//    private String serverPort;
-//
-//    @Bean
-//    public OpenAPI customOpenAPI() {
-//        return new OpenAPI()
-//                .servers(List.of(
-//                        new Server()
-//                                .url("http://localhost:" + serverPort)
-//                                .description("Local Development Server")
-//                ))
-//                .info(new Info()
-//                        .title("Documentation - Products API")
-//                        .version("1.0")
-//                        .description("""
-//                                This API allows users to manage articles and comments in a blogging platform.
-//
-//                                ### Features:
-//                                - Create, retrieve, update, and delete articles
-//                                - Add comments to articles
-//                                - Fetch comments related to specific articles
-//                                - Error handling with meaningful responses
-//
-//                                ### Technologies Used:
-//                                - **Spring Boot** for backend development
-//                                - **JPA & Hibernate** for database interaction
-//                                - **Swagger/OpenAPI** for API documentation
-//                                - **Lombok** to reduce boilerplate code
-//
-//                                This API is designed for developers who want to integrate blog functionality
-//                                into their applications or use it as a learning project for REST API development.
-//                                """)
-//                        .contact(new Contact()
-//                                .name("Technical Support")
-//                                .email("support@belvi.com")
-//                                .url("https://belvi.com/contact"))
-//                        .license(new License()
-//                                .name("MIT License")
-//                                .url("https://opensource.org/licenses/MIT"))
-//                        .termsOfService("https://belvi.com/terms"));
-//    }
-//}
+package com.belvinard.products_api.config;
+
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class SwaggerConfig {
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                    .title("🛒 Products Inventory API")
+                    .version("1.0.0")
+                    .description("API de gestion d'un inventaire de produits avec suivi des " +
+                            "stocks, alertes, et documentation Swagger.")
+                    .contact(new Contact()
+                        .name("Belvinard Dev")
+                        .email("belvinard@example.com")
+                        .url("https://github.com/belvinard"))
+                    .license(new License()
+                        .name("MIT License")
+                        .url("https://opensource.org/licenses/MIT"))
+                );
+    }
+}

@@ -79,20 +79,30 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductDTO updateProduct(Long productId, ProductDTO productDTO) {
-        Product existingProduct = productRepository.findByProductId(productId)
+        Product existingProduct = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+
+        Product productByName = productRepository.findByName(productDTO.getName());
+
+        if (productByName != null && !productByName.getProductId().equals(productId)) {
+            throw new DuplicateResourceException("A product with the name '" + productDTO.getName() + "' already exists.");
+        }
 
         existingProduct.setName(productDTO.getName());
         existingProduct.setPrice(productDTO.getPrice());
         existingProduct.setStockQuantity(productDTO.getStockQuantity());
 
         Product updatedProduct = productRepository.save(existingProduct);
+
         if (updatedProduct.getStockQuantity() < 5) {
             log.warn("⚠️ Stock alert (update): Product '{}' has only {} unit(s) in stock.",
                     updatedProduct.getName(), updatedProduct.getStockQuantity());
         }
+
         return modelMapper.map(updatedProduct, ProductDTO.class);
+
     }
+
 
     @Override
     public ProductDTO deleteProduct(Long productId) {

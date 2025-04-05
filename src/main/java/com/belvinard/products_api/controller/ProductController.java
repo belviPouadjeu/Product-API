@@ -42,14 +42,58 @@ public class ProductController {
     // =================== CREATE PRODUCT ======================= /
 
     @Operation(
-            summary = "Create a new product",
-            description = "Creates a product with name, price and stock quantity. Name must be unique."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Product created"),
-            @ApiResponse(responseCode = "400", description = "Invalid input"),
-            @ApiResponse(responseCode = "409", description = "Product name already exists",
-                    content = @Content(mediaType = "application/json"))
+            summary = "Créer un nouveau produit",
+            description = """
+        Crée un produit avec les informations suivantes :
+        - `name` : nom unique du produit
+        - `price` : prix du produit
+        - `stockQuantity` : quantité en stock
+        
+        ⚠️ Le nom du produit doit être unique.
+        """
+            )
+            @ApiResponses(value = {
+                    @ApiResponse(
+                            responseCode = "201",
+                            description = "Produit créé avec succès",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = ProductDTO.class),
+                                    examples = @ExampleObject(value = """
+            {
+              "name": "Laptop",
+              "price": 799.99,
+              "stockQuantity": 10
+            }
+            """)
+                                )
+                        ),
+                        @ApiResponse(
+                                responseCode = "400",
+                                description = "Entrée invalide",
+                                content = @Content(
+                                        mediaType = "application/json",
+                                        examples = @ExampleObject(value = """
+            {
+              "code": "BAD_REQUEST",
+              "message": "Le champ 'name' est requis"
+            }
+            """)
+                                )
+                        ),
+                        @ApiResponse(
+                                responseCode = "409",
+                                description = "Nom du produit déjà existant",
+                                content = @Content(
+                                        mediaType = "application/json",
+                                        examples = @ExampleObject(value = """
+            {
+              "code": "CONFLICT",
+              "message": "Un produit avec le nom 'Smartphone' existe déjà"
+            }
+            """)
+                                )
+                        )
     })
     @PostMapping
     public ResponseEntity<?> createProduct(@Valid @RequestBody ProductDTO productDTO) {
@@ -72,30 +116,54 @@ public class ProductController {
 
     // =================== GET ALL PRODUCTS ======================= /
     @Operation(
-            summary = "Get all products",
-            description = "Returns a list of all products in the inventory."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "List of products",
-                    content = @Content(
-                            mediaType = "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = ProductDTO.class))
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "204",
-                    description = "No products available"
-            ),
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "List of products",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ProductResponse.class)
-                    )
-            )
+            summary = "Récupérer tous les produits",
+            description = """
+            Récupère la liste complète des produits disponibles dans l’inventaire.
+            Chaque produit contient un identifiant, un nom, un prix et une quantité de stock.
+            
+            S’il y a des produits dont le stock est bas, un message d’alerte s’affiche également dans la réponse.
+            """
+                )
+                @ApiResponses(value = {
+                        @ApiResponse(
+                                responseCode = "200",
+                                description = "Liste des produits avec alertes éventuelles",
+                                content = @Content(
+                                        mediaType = "application/json",
+                                        schema = @Schema(implementation = ProductDTO.class),
+                                        examples = @ExampleObject(value = """
+            {
+              "content": [
+                {
+                  "id": 1,
+                  "name": "Smartphone",
+                  "price": 499.99,
+                  "stockQuantity": 4
+                },
+                {
+                  "id": 2,
+                  "name": "Tablet",
+                  "price": 299.99,
+                  "stockQuantity": 15
+                },
+                {
+                  "id": 3,
+                  "name": "Desktop PC",
+                  "price": 999.99,
+                  "stockQuantity": 5
+                }
+              ],
+              "alerts": [
+                "⚠️ Stock is low for product: Smartphone"
+              ]
+            }
+            """)
+                                )
+                        ),
+                        @ApiResponse(
+                                responseCode = "204",
+                                description = "Aucun produit disponible"
+                        )
     })
     @GetMapping
     public ResponseEntity<ProductResponse> getAllProducts() {
@@ -103,6 +171,178 @@ public class ProductController {
         return new  ResponseEntity<>(productResponse, HttpStatus.OK);
 
     }
+
+    // =================== UPDATE PRODUCT ======================= /
+
+    @PutMapping("/{productId}")
+    @Operation(
+            summary = "Mettre à jour un produit existant",
+            description = """
+            Met à jour les informations d’un produit à partir de son identifiant.
+            Le corps de la requête doit contenir un objet JSON avec les champs suivants :
+            - `name` (nom unique du produit)
+            - `price` (prix du produit)
+            - `stockQuantity` (quantité en stock)
+            
+            Le champ `id` n’est pas requis dans le corps. L’identifiant est passé dans l’URL.
+            """
+                )
+                @ApiResponses(value = {
+                        @ApiResponse(
+                                responseCode = "200",
+                                description = "Produit mis à jour avec succès",
+                                content = @Content(
+                                        mediaType = "application/json",
+                                        schema = @Schema(implementation = ProductDTO.class),
+                                        examples = @ExampleObject(value = """
+            {
+              "name": "Smartwatch",
+              "price": 199.99,
+              "stockQuantity": 10
+            }
+            """)
+                                )
+                        ),
+                        @ApiResponse(
+                                responseCode = "400",
+                                description = "Entrée invalide (nom manquant, prix négatif, etc.)",
+                                content = @Content(
+                                        mediaType = "application/json",
+                                        examples = @ExampleObject(value = """
+            {
+              "code": "BAD_REQUEST",
+              "message": "Le champ 'name' est requis."
+            }
+            """)
+                                )
+                        ),
+                        @ApiResponse(
+                                responseCode = "404",
+                                description = "Produit non trouvé pour l’ID fourni",
+                                content = @Content(
+                                        mediaType = "application/json",
+                                        examples = @ExampleObject(value = """
+            {
+              "code": "NOT_FOUND",
+              "message": "Aucun produit trouvé avec l’ID 42"
+            }
+            """)
+                                )
+                        )
+    })
+    public ResponseEntity<?> updateProduct(
+            @PathVariable Long productId,
+            @Valid @RequestBody ProductDTO productDTO) {
+        try {
+            ProductDTO updated = productService.updateProduct(productId, productDTO);
+            return ResponseEntity.ok(updated);
+        } catch (DuplicateResourceException e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(errorResponse);
+        }
+    }
+
+    // =================== DELETE PRODUCT ======================= /
+
+    @DeleteMapping("/{productId}")
+    @Operation(
+            summary = "Supprimer un produit",
+            description = """
+            Supprime un produit de l’inventaire à partir de son identifiant (`productId`).
+            Si aucun produit n’est trouvé avec l’ID spécifié, une erreur 404 est renvoyée.
+            
+            🔒 Remarque : cette opération est irréversible.
+            """
+                )
+                @ApiResponses(value = {
+                        @ApiResponse(
+                                responseCode = "200",
+                                description = "Produit supprimé avec succès",
+                                content = @Content(
+                                        mediaType = "application/json",
+                                        schema = @Schema(implementation = ProductDTO.class),
+                                        examples = @ExampleObject(value = """
+            {
+              "name": "Smartphone",
+              "price": 499.99,
+              "stockQuantity": 4
+            }
+            """)
+                                )
+                        ),
+                        @ApiResponse(
+                                responseCode = "404",
+                                description = "Produit introuvable",
+                                content = @Content(
+                                        mediaType = "application/json",
+                                        examples = @ExampleObject(value = """
+            {
+              "code": "NOT_FOUND",
+              "message": "Aucun produit trouvé avec l’ID 99"
+            }
+            """)
+                                )
+                        )
+    })
+    public ResponseEntity<ProductDTO> deleteProduct(
+            @Parameter(description = "ID du produit à supprimer", example = "1")
+            @PathVariable Long productId) {
+
+        ProductDTO productDTO = productService.deleteProduct(productId);
+        return new ResponseEntity<>(productDTO, HttpStatus.OK);
+    }
+
+
+    // =================== GET LOW PRODUCTS ======================= /
+
+    @GetMapping("/low-stock")
+    @Operation(
+            summary = "Obtenir les produits en faible stock",
+            description = """
+            Retourne la liste des produits dont la quantité en stock est inférieure à 5 unités.
+            
+            📦 Utile pour le réapprovisionnement et la gestion des alertes de stock.
+            """
+                )
+                @ApiResponses(value = {
+                        @ApiResponse(
+                                responseCode = "200",
+                                description = "Produits en faible stock récupérés avec succès",
+                                content = @Content(
+                                        mediaType = "application/json",
+                                        array = @ArraySchema(schema = @Schema(implementation = ProductDTO.class)),
+                                        examples = @ExampleObject(value = """
+            [
+              {
+                "name": "Smartphone",
+                "price": 499.99,
+                "stockQuantity": 2
+              },
+              {
+                "name": "Laptop",
+                "price": 899.99,
+                "stockQuantity": 1
+              }
+            ]
+            """)
+                                )
+                        ),
+                        @ApiResponse(
+                                responseCode = "204",
+                                description = "Aucun produit en faible stock"
+                        )
+    })
+    public ResponseEntity<List<ProductDTO>> getLowStockProducts() {
+        List<ProductDTO> lowStockProducts = productService.getLowStockProducts();
+        return ResponseEntity.ok(lowStockProducts);
+    }
+
+
+    // =================== EXCEPTIONS ======================= /
+
 
 
     // ✅ Handle validation errors
@@ -121,72 +361,6 @@ public class ProductController {
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
-
-    // =================== UPDATE PRODUCT ======================= /
-
-    @PutMapping("/{productId}")
-    @Operation(
-            summary = "Update an existing product",
-            description = "Updates the product details by ID. Requires name, price, and stock quantity."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Product updated successfully",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProductDTO.class))
-            ),
-            @ApiResponse(
-                    responseCode = "404",
-                    description = "Product not found",
-                    content = @Content(mediaType = "application/json")
-            )
-    })
-    public ResponseEntity<ProductDTO> updateProduct(
-            @Parameter(description = "ID of the product to update", example = "1")
-            @PathVariable Long productId,
-
-            @Valid @RequestBody ProductDTO productDTO) {
-
-        ProductDTO updated = productService.updateProduct(productId, productDTO);
-        return new ResponseEntity<>(updated, HttpStatus.OK);
-    }
-
-    // =================== DELETE PRODUCT ======================= /
-
-    @Operation(
-            summary = "Delete a product",
-            description = "Deletes a product by its ID. Throws 404 if the product is not found."
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Product deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "Product not found")
-    })
-    @DeleteMapping("/{productId}")
-    public ResponseEntity<ProductDTO> deleteProduct(
-            @Parameter(description = "ID of the product to delete", example = "1")
-            @PathVariable Long productId) {
-
-        ProductDTO productDTO =  productService.deleteProduct(productId);
-        return new ResponseEntity<>(productDTO, HttpStatus.OK);
-    }
-
-    // =================== GET LOW PRODUCTS ======================= /
-
-    @Operation(
-            summary = "Get low stock products",
-            description = "Returns a list of products with stock less than 5"
-    )
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Low stock products fetched successfully")
-    })
-    @GetMapping("/low-stock")
-    public ResponseEntity<List<ProductDTO>> getLowStockProducts() {
-        List<ProductDTO> lowStockProducts = productService.getLowStockProducts();
-        return ResponseEntity.ok(lowStockProducts);
-    }
-
-    // =================== EXCEPTIONS ======================= /
 
     @Operation(hidden = true)
     @ExceptionHandler(ResourceNotFoundException.class)
