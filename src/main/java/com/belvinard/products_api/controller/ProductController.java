@@ -1,7 +1,9 @@
 package com.belvinard.products_api.controller;
 
 import com.belvinard.products_api.dto.ProductDTO;
+import com.belvinard.products_api.dto.ProductResponseDTO;
 import com.belvinard.products_api.exceptions.APIException;
+import com.belvinard.products_api.exceptions.DuplicateResourceException;
 import com.belvinard.products_api.exceptions.ResourceNotFoundException;
 import com.belvinard.products_api.response.MyErrorResponses;
 import com.belvinard.products_api.response.ProductResponse;
@@ -37,57 +39,38 @@ public class ProductController {
         this.productService = productService;
     }
 
+    // =================== CREATE PRODUCT ======================= /
+
     @Operation(
-            summary = "Créer un nouveau produit",
-            description = "Ajoute un produit à l'inventaire. Le nom, le prix et la quantité en stock sont requis."
+            summary = "Create a new product",
+            description = "Creates a product with name, price and stock quantity. Name must be unique."
     )
     @ApiResponses(value = {
-            @ApiResponse(
-                    responseCode = "201",
-                    description = "Produit créé avec succès",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = ProductDTO.class),
-                            examples = @ExampleObject(value = """
-                            {
-                                "name": "Laptop",
-                                "price": 1299.99,
-                                "stockQuantity": 20
-                            }
-                            """)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "400",
-                    description = "Champs invalides ou manquants",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = """
-                            {
-                                "message": "Product name cannot be blank"
-                            }
-                            """)
-                    )
-            ),
-            @ApiResponse(
-                    responseCode = "500",
-                    description = "Erreur interne du serveur",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(value = """
-                            {
-                                "message": "Une erreur est survenue lors de la création du produit"
-                            }
-                            """)
-                    )
-            )
+            @ApiResponse(responseCode = "201", description = "Product created"),
+            @ApiResponse(responseCode = "400", description = "Invalid input"),
+            @ApiResponse(responseCode = "409", description = "Product name already exists",
+                    content = @Content(mediaType = "application/json"))
     })
     @PostMapping
-    public ResponseEntity<ProductDTO> createProduct(@Valid @RequestBody ProductDTO productDTO) {
-        ProductDTO createdProduct = productService.createProduct(productDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
+    public ResponseEntity<?> createProduct(@Valid @RequestBody ProductDTO productDTO) {
+        try {
+            ProductResponseDTO response = productService.createProduct(productDTO);
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+        } catch (DuplicateResourceException ex) {
+            // Retourne un message clair à Swagger
+            Map<String, String> error = new HashMap<>();
+            error.put("status", "CONFLICT");
+            error.put("message", ex.getMessage());
+            return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+        } catch (Exception ex) {
+            Map<String, String> error = new HashMap<>();
+            error.put("status", "INTERNAL_SERVER_ERROR");
+            error.put("message", "Unexpected error occurred");
+            return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
+    // =================== GET ALL PRODUCTS ======================= /
     @Operation(
             summary = "Get all products",
             description = "Returns a list of all products in the inventory."
@@ -104,6 +87,14 @@ public class ProductController {
             @ApiResponse(
                     responseCode = "204",
                     description = "No products available"
+            ),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "List of products",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ProductResponse.class)
+                    )
             )
     })
     @GetMapping
@@ -111,7 +102,6 @@ public class ProductController {
         ProductResponse productResponse = productService.getAllProducts();
         return new  ResponseEntity<>(productResponse, HttpStatus.OK);
 
-//        return ResponseEntity.ok(products);
     }
 
 
@@ -131,6 +121,8 @@ public class ProductController {
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
+
+    // =================== UPDATE PRODUCT ======================= /
 
     @PutMapping("/{productId}")
     @Operation(
@@ -160,6 +152,8 @@ public class ProductController {
         return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
+    // =================== DELETE PRODUCT ======================= /
+
     @Operation(
             summary = "Delete a product",
             description = "Deletes a product by its ID. Throws 404 if the product is not found."
@@ -177,8 +171,22 @@ public class ProductController {
         return new ResponseEntity<>(productDTO, HttpStatus.OK);
     }
 
+    // =================== GET LOW PRODUCTS ======================= /
 
+    @Operation(
+            summary = "Get low stock products",
+            description = "Returns a list of products with stock less than 5"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Low stock products fetched successfully")
+    })
+    @GetMapping("/low-stock")
+    public ResponseEntity<List<ProductDTO>> getLowStockProducts() {
+        List<ProductDTO> lowStockProducts = productService.getLowStockProducts();
+        return ResponseEntity.ok(lowStockProducts);
+    }
 
+    // =================== EXCEPTIONS ======================= /
 
     @Operation(hidden = true)
     @ExceptionHandler(ResourceNotFoundException.class)

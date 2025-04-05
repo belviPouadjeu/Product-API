@@ -6,12 +6,14 @@ import java.util.List;
 
 public class ProductResponse {
     List<ProductDTO> content;
+    private List<String> alerts;
 
     public ProductResponse() {
     }
 
-    public ProductResponse(List<ProductDTO> content) {
+    public ProductResponse(List<ProductDTO> content, List<String> alerts) {
         this.content = content;
+        this.alerts = alerts;
     }
 
     public List<ProductDTO> getContent() {
@@ -20,5 +22,13 @@ public class ProductResponse {
 
     public void setContent(List<ProductDTO> content) {
         this.content = content;
+    }
+
+    public List<String> getAlerts() {
+        return alerts;
+    }
+
+    public void setAlerts(List<String> alerts) {
+        this.alerts = alerts;
     }
 }
