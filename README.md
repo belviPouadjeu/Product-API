@@ -121,7 +121,7 @@ Retourne les produits dont la quantité en stock est inférieure à 5 :
 
 📌 **Auteur**  
 Développé par Belvinard Dev  
-📧 Contact : votremail@example.com
+📧 Contact : belvinard97mail@gmail.com
 
 📄 **Licence**  
 Ce projet est open-source et libre d’utilisation. Licence MIT.
